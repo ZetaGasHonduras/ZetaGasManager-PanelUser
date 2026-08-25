@@ -45,8 +45,8 @@ export class SelectInputsComponent {
     { value: '5', text: 'Option 5', selected: false },
   ];
 
-  handleSelectChange(value: string) {
-    this.selectedValue = value;
+  handleSelectChange(value: string | number) {
+    this.selectedValue = value.toString();
     console.log('Selected value:', value);
   }
 

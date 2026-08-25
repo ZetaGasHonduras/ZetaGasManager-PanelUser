@@ -2,7 +2,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 
 export interface Option {
-  value: string;
+  value: string | number;
   label: string;
 }
 
@@ -15,10 +15,10 @@ export class SelectComponent implements OnInit {
   @Input() options: Option[] = [];
   @Input() placeholder: string = 'Select an option';
   @Input() className: string = '';
-  @Input() defaultValue: string = '';
-  @Input() value: string = '';
+  @Input() defaultValue: string | number = '';
+  @Input() value: string | number = '';
 
-  @Output() valueChange = new EventEmitter<string>();
+  @Output() valueChange = new EventEmitter<string | number>();
 
   ngOnInit() {
     if (!this.value && this.defaultValue) {
@@ -27,7 +27,9 @@ export class SelectComponent implements OnInit {
   }
 
   onChange(event: Event) {
-    const value = (event.target as HTMLSelectElement).value;
+    const raw = (event.target as HTMLSelectElement).value;
+    const matched = this.options.find(o => o.value.toString() === raw);
+    const value = matched ? matched.value : raw;
     this.value = value;
     this.valueChange.emit(value);
   }

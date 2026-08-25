@@ -1,0 +1,63 @@
+<app-page-breadcrumb [pageTitle]="isEdit ? 'Editar Rol' : 'Crear Rol'" />
+
+<div class="space-y-6">
+  <div class="max-w-2xl overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">
+        {{ isEdit ? 'Editar Rol' : 'Nuevo Rol' }}
+      </h3>
+    </div>
+
+    @if (loading) {
+      <div class="flex items-center justify-center py-12">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent"></div>
+      </div>
+    }
+
+    @if (error) {
+      <div class="px-5 py-4 text-sm text-error-500">{{ error }}</div>
+    }
+
+    @if (!loading) {
+      <div class="p-5 space-y-5">
+        <div>
+          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre del rol <span class="text-error-500">*</span></label>
+          <input
+            type="text"
+            [(ngModel)]="roleName"
+            placeholder="Ej: Administrador"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+          />
+        </div>
+
+        @if (permissions.length > 0) {
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Permisos</label>
+            <div class="max-h-80 overflow-y-auto rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              @for (perm of permissions; track perm.id) {
+                <label class="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.03] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [checked]="isPermissionSelected(perm.id)"
+                    (change)="togglePermission(perm.id)"
+                    class="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500/20 dark:border-gray-600"
+                  />
+                  <div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ perm.description }}</span>
+                  </div>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="flex justify-end gap-3 border-t border-gray-200 px-5 py-4 dark:border-gray-800">
+        <app-button variant="outline" size="sm" (btnClick)="router.navigate(['/roles'])">Cancelar</app-button>
+        <app-button variant="primary" size="sm" [disabled]="saving || !roleName.trim()" (btnClick)="save()">
+          {{ saving ? 'Guardando...' : 'Guardar' }}
+        </app-button>
+      </div>
+    }
+  </div>
+</div>
