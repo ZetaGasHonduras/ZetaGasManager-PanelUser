@@ -33,8 +33,8 @@ export class DefaultInputsComponent {
   timeValue = '';
   cardNumber = '';
 
-  handleSelectChange(value: string) {
-    this.selectedOption = value;
+  handleSelectChange(value: string | number) {
+    this.selectedOption = value.toString();
     console.log('Selected value:', value);
   }
 

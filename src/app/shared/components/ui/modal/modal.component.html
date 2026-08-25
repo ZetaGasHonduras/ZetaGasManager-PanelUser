@@ -10,8 +10,7 @@
   }
   <!-- Modal Content -->
   <div
-    [ngClass]="isFullscreen ? 'w-full h-full' : 'relative w-full rounded-3xl bg-white dark:bg-gray-900'"
-    [class]="className"
+    [ngClass]="isFullscreen ? 'w-full h-full' : 'relative w-full rounded-3xl bg-white dark:bg-gray-900 ' + maxWidthClass + ' ' + className"
     (click)="onContentClick($event)"
   >
     @if (showCloseButton) {
