@@ -21,6 +21,8 @@ import { RolesListComponent } from './pages/roles/roles-list/roles-list.componen
 import { RolesFormComponent } from './pages/roles/roles-form/roles-form.component';
 import { UsersListComponent } from './pages/users/users-list/users-list.component';
 import { UsersFormComponent } from './pages/users/users-form/users-form.component';
+import { DepartmentsListComponent } from './pages/departments/departments-list/departments-list.component';
+import { MunicipalitiesListComponent } from './pages/municipalities/municipalities-list/municipalities-list.component';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { Permission } from './core/authorization/permissions.enum';
@@ -127,6 +129,19 @@ export const routes: Routes = [
         component: UsersListComponent,
         canActivate: [permissionGuard(Permission.CanViewUsers)],
         title: 'ZetaGas Manager - Usuarios',
+      },
+      // País
+      {
+        path: 'departamentos',
+        component: DepartmentsListComponent,
+        canActivate: [permissionGuard(Permission.CanViewDepartments)],
+        title: 'ZetaGas Manager - Departamentos',
+      },
+      {
+        path: 'municipios',
+        component: MunicipalitiesListComponent,
+        canActivate: [permissionGuard(Permission.CanViewMunicipalities)],
+        title: 'ZetaGas Manager - Municipios',
       },
     ]
   },
