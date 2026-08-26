@@ -43,7 +43,6 @@ export class RolesListComponent implements OnInit {
   selectedRole: RoleDto | null = null;
   roleName = '';
   saving = false;
-  lastCreatedId: number | null = null;
 
   currentPage = 1;
   pageSize = 10;
@@ -207,14 +206,16 @@ export class RolesListComponent implements OnInit {
     const permissionIds = this.assigned().map(p => Number(p.id));
     const roleName = this.roleName.trim();
     const isCreate = this.modalMode === 'create';
+    const roleId = isCreate ? null : this.selectedRole!.id;
 
-    const afterSave = () => {
-      const roleId = isCreate ? this.lastCreatedId! : this.selectedRole!.id;
-      this.rolesService.updatePermissions(roleId, { permissionIds }).subscribe({
-        next: () => this.handleSuccess(isCreate ? `Rol "${roleName}" creado` : `Rol "${roleName}" actualizado`),
+    this.closeModal();
+
+    const afterSave = (newId: number) => {
+      this.rolesService.updatePermissions(newId, { permissionIds }).subscribe({
+        next: () => { this.loadRoles(); this.snackbar.success(isCreate ? `Rol "${roleName}" creado` : `Rol "${roleName}" actualizado`); },
         error: (err) => {
+          this.loadRoles();
           this.snackbar.warning(err.error?.message || 'Permisos no actualizados, pero el rol fue guardado');
-          this.handleSuccess('');
         }
       });
     };
@@ -222,23 +223,18 @@ export class RolesListComponent implements OnInit {
     if (isCreate) {
       this.rolesService.create({ name: roleName }).subscribe({
         next: (created: any) => {
-          this.lastCreatedId = created.id ?? created.data?.id;
-          afterSave();
+          const newId = created.id ?? created.data?.id;
+          if (newId) afterSave(newId);
+          else this.loadRoles();
         },
         error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al crear rol'); }
       });
-    } else if (this.selectedRole) {
-      this.rolesService.update(this.selectedRole.id, { name: roleName }).subscribe({
-        next: () => afterSave(),
+    } else {
+      this.rolesService.update(roleId!, { name: roleName }).subscribe({
+        next: () => afterSave(roleId!),
         error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al actualizar rol'); }
       });
     }
-  }
-
-  private handleSuccess(message: string) {
-    this.closeModal();
-    this.loadRoles();
-    if (message) this.snackbar.success(message);
   }
 
   deleteRole(role: RoleDto) {
