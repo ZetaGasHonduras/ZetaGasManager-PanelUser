@@ -52,6 +52,7 @@ export class UsersListComponent implements OnInit {
   formPassword = '';
   formRoleId: number | null = null;
   formIsActive = true;
+  showPassword = false;
 
   showAssignRoleModal = false;
   assignRoleUser: UserDto | null = null;
@@ -150,11 +151,11 @@ export class UsersListComponent implements OnInit {
         next: (res: any) => {
           if (this.formRoleId) {
             this.usersService.assignRole(this.selectedUser!.id, { roleId: this.formRoleId }).subscribe({
-              next: () => { this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`); },
-              error: () => { this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`); }
+              next: () => { this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`); },
+              error: () => { this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`); }
             });
           } else {
-            this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`);
+            this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`);
           }
         },
         error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al actualizar usuario'); }
