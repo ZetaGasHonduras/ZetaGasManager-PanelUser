@@ -14,7 +14,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         storage.clear();
         router.navigate(['/signin']);
       }
-      return throwError(() => error);
+
+      const body = error.error;
+      const message = body?.message || error.message || 'Error del servidor';
+      const errors: string[] = body?.errors || [];
+
+      return throwError(() => ({ status: error.status, message, errors }));
     })
   );
 };
