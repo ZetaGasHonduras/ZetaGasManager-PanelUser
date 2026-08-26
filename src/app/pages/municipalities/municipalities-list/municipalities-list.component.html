@@ -127,11 +127,15 @@
               Anterior
             </button>
             @for (p of getPageNumbers(); track p) {
-              <button (click)="goToPage(p)"
-                class="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition-colors"
-                [ngClass]="currentPage === p ? 'bg-brand-500 text-white' : 'text-gray-700 hover:bg-brand-500/10 dark:text-gray-400 dark:hover:bg-brand-500 dark:hover:text-white'">
-                {{ p }}
-              </button>
+              @if (p < 0) {
+                <span class="flex h-8 w-8 items-center justify-center text-sm text-gray-400">...</span>
+              } @else {
+                <button (click)="goToPage(p)"
+                  class="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition-colors"
+                  [ngClass]="currentPage === p ? 'bg-brand-500 text-white' : 'text-gray-700 hover:bg-brand-500/10 dark:text-gray-400 dark:hover:bg-brand-500 dark:hover:text-white'">
+                  {{ p }}
+                </button>
+              }
             }
             <button (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
               class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
