@@ -106,6 +106,7 @@ export class UsersFormComponent implements OnInit {
         name: this.name.trim(),
         email: this.email.trim(),
         password: this.password.trim(),
+        password_confirmation: this.password.trim(),
         roleId: this.roleId,
       }).subscribe({
         next: () => this.router.navigate(['/users']),

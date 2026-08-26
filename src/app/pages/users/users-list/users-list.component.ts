@@ -128,14 +128,17 @@ export class UsersListComponent implements OnInit {
     const userName = this.formName.trim();
     const isCreate = this.modalMode === 'create';
 
+    this.showModal = false;
+
     if (isCreate) {
       this.usersService.create({
         name: userName,
         email: this.formEmail.trim(),
         password: this.formPassword.trim(),
+        password_confirmation: this.formPassword.trim(),
         roleId: this.formRoleId!,
       }).subscribe({
-        next: (res: any) => { this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" creado`); },
+        next: (res: any) => { this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" creado`); },
         error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al crear usuario'); }
       });
     } else if (this.selectedUser) {
