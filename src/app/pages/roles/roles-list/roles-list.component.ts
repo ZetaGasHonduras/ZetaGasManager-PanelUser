@@ -112,16 +112,14 @@ export class RolesListComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.rolesService.getAll({ page: this.currentPage, per_page: this.pageSize }).subscribe({
-      next: (res: any) => { this.roles = Array.isArray(res) ? res : (res?.data ?? []); this.totalRecords = Array.isArray(res) ? res.length : (res?.total ?? 0); this.loading = false; },
+      next: (res) => { this.roles = res.data; this.totalRecords = res.pagination.total; this.loading = false; },
       error: () => { this.error = 'Error al cargar roles'; this.loading = false; }
     });
   }
 
   loadPermissions() {
     this.permissionApi.getAll().subscribe({
-      next: (res: any) => {
-        this.allPermissions = Array.isArray(res) ? res : (res?.data ?? []);
-      },
+      next: (res) => { this.allPermissions = res; },
       error: () => { this.allPermissions = []; }
     });
   }
@@ -150,8 +148,8 @@ export class RolesListComponent implements OnInit {
     this.showModal = true;
 
     this.rolesService.getById(role.id).subscribe({
-      next: (fullRole: any) => {
-        const permNames: string[] = (fullRole.permissions ?? []).map((p: any) => typeof p === 'string' ? p : p.name ?? '');
+      next: (fullRole) => {
+        const permNames: string[] = (fullRole.permissions ?? []).map(p => typeof p === 'string' ? p : p.name ?? '');
         this.assigned.set(this.allPermissions.filter(p => permNames.includes(p.name)));
         this.available.set(this.allPermissions.filter(p => !permNames.includes(p.name)));
       },
@@ -208,31 +206,30 @@ export class RolesListComponent implements OnInit {
     const isCreate = this.modalMode === 'create';
     const roleId = isCreate ? null : this.selectedRole!.id;
 
-    this.closeModal();
-
     const afterSave = (newId: number) => {
       this.rolesService.updatePermissions(newId, { permissionIds }).subscribe({
-        next: () => { this.loadRoles(); this.snackbar.success(isCreate ? `Rol "${roleName}" creado` : `Rol "${roleName}" actualizado`); },
+        next: () => { this.closeModal(); this.loadRoles(); this.snackbar.success(isCreate ? `Rol "${roleName}" creado` : `Rol "${roleName}" actualizado`); },
         error: (err) => {
+          this.closeModal();
           this.loadRoles();
-          this.snackbar.warning(err.error?.message || 'Permisos no actualizados, pero el rol fue guardado');
+          this.snackbar.warning(err.message || 'Permisos no actualizados, pero el rol fue guardado');
         }
       });
     };
 
     if (isCreate) {
       this.rolesService.create({ name: roleName }).subscribe({
-        next: (created: any) => {
-          const newId = created.id ?? created.data?.id;
+        next: (res) => {
+          const newId = res.data?.id;
           if (newId) afterSave(newId);
-          else this.loadRoles();
+          else { this.closeModal(); this.loadRoles(); }
         },
-        error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al crear rol'); }
+        error: (err) => { this.saving = false; this.snackbar.error(err.message || 'Error al crear rol'); }
       });
     } else {
       this.rolesService.update(roleId!, { name: roleName }).subscribe({
         next: () => afterSave(roleId!),
-        error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al actualizar rol'); }
+        error: (err) => { this.saving = false; this.snackbar.error(err.message || 'Error al actualizar rol'); }
       });
     }
   }
@@ -240,8 +237,8 @@ export class RolesListComponent implements OnInit {
   deleteRole(role: RoleDto) {
     if (!confirm(`¿Eliminar el rol "${role.name}"?`)) return;
     this.rolesService.delete(role.id).subscribe({
-      next: (res: any) => { this.loadRoles(); this.snackbar.success(res?.message || `Rol "${role.name}" eliminado`); },
-      error: (err) => this.snackbar.error(err.error?.message || 'Error al eliminar rol')
+      next: (res) => { this.loadRoles(); this.snackbar.success(res.message || `Rol "${role.name}" eliminado`); },
+      error: (err) => this.snackbar.error(err.message || 'Error al eliminar rol')
     });
   }
 
