@@ -7,7 +7,7 @@ import { StorageService } from './storage.service';
 import { Permission } from '../authorization/permissions.enum';
 
 export interface LoginRequest {
-    email: string;
+    login: string;
     password: string;
 }
 
