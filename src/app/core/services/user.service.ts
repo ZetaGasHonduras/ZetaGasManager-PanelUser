@@ -1,23 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
-export interface PaginatedResult<T> {
-    current_page: number;
-    data: T[];
-    first_page_url: string;
-    from: number;
-    last_page: number;
-    last_page_url: string;
-    links: any[];
-    next_page_url: string | null;
-    path: string;
-    per_page: number;
-    prev_page_url: string | null;
-    to: number;
-    total: number;
-}
+import { ApiResponse, PaginatedResult } from '../models/api-response.model';
 
 export interface RoleRef {
     id: number;
@@ -27,7 +12,8 @@ export interface RoleRef {
 export interface UserDto {
     id: number;
     name: string;
-    email: string;
+    username: string | null;
+    email: string | null;
     isActive: boolean;
     createdAt: string;
     roles: RoleRef[];
@@ -36,15 +22,19 @@ export interface UserDto {
 
 export interface CreateUserRequest {
     name: string;
-    email: string;
+    username?: string | null;
+    email?: string | null;
     password: string;
+    password_confirmation: string;
     roleId: number;
+    isActive?: boolean;
 }
 
 export interface UpdateUserRequest {
-    name: string;
-    email: string;
-    isActive: boolean;
+    name?: string;
+    username?: string | null;
+    email?: string | null;
+    isActive?: boolean;
 }
 
 export interface ChangePasswordRequest {
@@ -66,30 +56,34 @@ export class UsersService {
         if (params?.page) httpParams = httpParams.set('page', params.page.toString());
         if (params?.per_page) httpParams = httpParams.set('per_page', params.per_page.toString());
         if (params?.search) httpParams = httpParams.set('search', params.search);
-        return this.http.get<PaginatedResult<UserDto>>(this.baseUrl, { params: httpParams });
+        return this.http.get<ApiResponse<UserDto[]>>(this.baseUrl, { params: httpParams }).pipe(
+            map(res => ({ data: res.data ?? [], pagination: res.pagination! }))
+        );
     }
 
     getById(id: number) {
-        return this.http.get<UserDto>(`${this.baseUrl}/${id}`);
+        return this.http.get<ApiResponse<UserDto>>(`${this.baseUrl}/${id}`).pipe(
+            map(res => res.data)
+        );
     }
 
     create(request: CreateUserRequest) {
-        return this.http.post<UserDto>(this.baseUrl, request);
+        return this.http.post<ApiResponse<UserDto>>(this.baseUrl, request);
     }
 
     update(id: number, request: UpdateUserRequest) {
-        return this.http.put<UserDto>(`${this.baseUrl}/${id}`, request);
+        return this.http.put<ApiResponse<UserDto>>(`${this.baseUrl}/${id}`, request);
     }
 
     delete(id: number) {
-        return this.http.delete(`${this.baseUrl}/${id}`);
+        return this.http.delete<ApiResponse<null>>(`${this.baseUrl}/${id}`);
     }
 
     changePassword(id: number, request: ChangePasswordRequest) {
-        return this.http.patch(`${this.baseUrl}/${id}/change-password`, request);
+        return this.http.patch<ApiResponse<null>>(`${this.baseUrl}/${id}/change-password`, request);
     }
 
     assignRole(id: number, request: AssignRoleRequest) {
-        return this.http.patch(`${this.baseUrl}/${id}/assign-role`, request);
+        return this.http.patch<ApiResponse<null>>(`${this.baseUrl}/${id}/assign-role`, request);
     }
 }

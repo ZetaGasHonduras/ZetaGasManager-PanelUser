@@ -91,12 +91,17 @@ export class RolesFormComponent implements OnInit {
       });
     } else {
       this.rolesService.create({ name: this.roleName.trim() }).subscribe({
-        next: (created) => {
+        next: (res) => {
           if (this.selectedPermissionIds.length > 0) {
-            this.rolesService.updatePermissions(created.id, { permissionIds: this.selectedPermissionIds }).subscribe({
-              next: () => this.router.navigate(['/roles']),
-              error: () => { this.saving = false; }
-            });
+            const id = res.data?.id;
+            if (id) {
+              this.rolesService.updatePermissions(id, { permissionIds: this.selectedPermissionIds }).subscribe({
+                next: () => this.router.navigate(['/roles']),
+                error: () => { this.saving = false; }
+              });
+            } else {
+              this.router.navigate(['/roles']);
+            }
           } else {
             this.router.navigate(['/roles']);
           }

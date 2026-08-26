@@ -27,7 +27,7 @@ export class SigninFormComponent {
 
   showPassword = false;
 
-  email = '';
+  login = '';
   password = '';
   loading = false;
   errorMessage = '';
@@ -37,22 +37,22 @@ export class SigninFormComponent {
   }
 
   onSignIn() {
-    if (!this.email.trim() || !this.password.trim()) {
-      this.errorMessage = 'Ingresa tu correo y contraseña.';
+    if (!this.login.trim() || !this.password.trim()) {
+      this.errorMessage = 'Ingresa tu usuario y contraseña.';
       return;
     }
 
     this.loading = true;
     this.errorMessage = '';
 
-    this.auth.login({ email: this.email.trim(), password: this.password }).subscribe({
+    this.auth.login({ login: this.login.trim(), password: this.password }).subscribe({
       next: () => {
         this.loading = false;
         this.router.navigate(['/']);
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.message || 'Credenciales incorrectas. Intenta de nuevo.';
+        this.errorMessage = err.message || 'Credenciales incorrectas. Intenta de nuevo.';
       }
     });
   }

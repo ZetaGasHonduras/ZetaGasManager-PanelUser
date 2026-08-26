@@ -7,14 +7,14 @@ import { StorageService } from './storage.service';
 import { Permission } from '../authorization/permissions.enum';
 
 export interface LoginRequest {
-    email: string;
+    login: string;
     password: string;
 }
 
 export interface AuthUser {
     id: number;
     name: string;
-    email: string;
+    email: string | null;
     roles: string[];
     permissions: string[];
 }
@@ -29,7 +29,7 @@ export interface AuthResponse {
 export interface MeResponse {
     id: number;
     name: string;
-    email: string;
+    email: string | null;
     isActive: boolean;
     createdAt: string;
     roles: string[];

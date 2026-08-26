@@ -16,7 +16,7 @@
           Iniciar Sesión
         </h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          Ingresa tu correo y contraseña para acceder.
+          Ingresa tu usuario y contraseña para acceder.
         </p>
       </div>
 
@@ -29,14 +29,14 @@
       <!-- Form -->
       <form (ngSubmit)="onSignIn()" class="space-y-6">
         <div>
-          <app-label>Correo electrónico <span class="text-error-500">*</span></app-label>
+          <app-label>Usuario / Correo <span class="text-error-500">*</span></app-label>
           <app-input-field
-            type="email"
-            placeholder="correo@ejemplo.com"
-            [value]="email"
-            name="email"
+            type="text"
+            placeholder="Usuario o correo"
+            [value]="login"
+            name="login"
             class="form-input"
-            (valueChange)="email = $event.toString()"
+            (valueChange)="login = $event.toString()"
             required
           />
         </div>

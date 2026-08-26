@@ -43,7 +43,6 @@ export class RolesListComponent implements OnInit {
   selectedRole: RoleDto | null = null;
   roleName = '';
   saving = false;
-  lastCreatedId: number | null = null;
 
   currentPage = 1;
   pageSize = 10;
@@ -113,16 +112,14 @@ export class RolesListComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.rolesService.getAll({ page: this.currentPage, per_page: this.pageSize }).subscribe({
-      next: (res: any) => { this.roles = Array.isArray(res) ? res : (res?.data ?? []); this.totalRecords = Array.isArray(res) ? res.length : (res?.total ?? 0); this.loading = false; },
+      next: (res) => { this.roles = res.data; this.totalRecords = res.pagination.total; this.loading = false; },
       error: () => { this.error = 'Error al cargar roles'; this.loading = false; }
     });
   }
 
   loadPermissions() {
     this.permissionApi.getAll().subscribe({
-      next: (res: any) => {
-        this.allPermissions = Array.isArray(res) ? res : (res?.data ?? []);
-      },
+      next: (res) => { this.allPermissions = res; },
       error: () => { this.allPermissions = []; }
     });
   }
@@ -151,8 +148,8 @@ export class RolesListComponent implements OnInit {
     this.showModal = true;
 
     this.rolesService.getById(role.id).subscribe({
-      next: (fullRole: any) => {
-        const permNames: string[] = (fullRole.permissions ?? []).map((p: any) => typeof p === 'string' ? p : p.name ?? '');
+      next: (fullRole) => {
+        const permNames: string[] = (fullRole.permissions ?? []).map(p => typeof p === 'string' ? p : p.name ?? '');
         this.assigned.set(this.allPermissions.filter(p => permNames.includes(p.name)));
         this.available.set(this.allPermissions.filter(p => !permNames.includes(p.name)));
       },
@@ -207,45 +204,41 @@ export class RolesListComponent implements OnInit {
     const permissionIds = this.assigned().map(p => Number(p.id));
     const roleName = this.roleName.trim();
     const isCreate = this.modalMode === 'create';
+    const roleId = isCreate ? null : this.selectedRole!.id;
 
-    const afterSave = () => {
-      const roleId = isCreate ? this.lastCreatedId! : this.selectedRole!.id;
-      this.rolesService.updatePermissions(roleId, { permissionIds }).subscribe({
-        next: () => this.handleSuccess(isCreate ? `Rol "${roleName}" creado` : `Rol "${roleName}" actualizado`),
+    const afterSave = (newId: number) => {
+      this.rolesService.updatePermissions(newId, { permissionIds }).subscribe({
+        next: () => { this.closeModal(); this.loadRoles(); this.snackbar.success(isCreate ? `Rol "${roleName}" creado` : `Rol "${roleName}" actualizado`); },
         error: (err) => {
-          this.snackbar.warning(err.error?.message || 'Permisos no actualizados, pero el rol fue guardado');
-          this.handleSuccess('');
+          this.closeModal();
+          this.loadRoles();
+          this.snackbar.warning(err.message || 'Permisos no actualizados, pero el rol fue guardado');
         }
       });
     };
 
     if (isCreate) {
       this.rolesService.create({ name: roleName }).subscribe({
-        next: (created: any) => {
-          this.lastCreatedId = created.id ?? created.data?.id;
-          afterSave();
+        next: (res) => {
+          const newId = res.data?.id;
+          if (newId) afterSave(newId);
+          else { this.closeModal(); this.loadRoles(); }
         },
-        error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al crear rol'); }
+        error: (err) => { this.saving = false; this.snackbar.error(err.message || 'Error al crear rol'); }
       });
-    } else if (this.selectedRole) {
-      this.rolesService.update(this.selectedRole.id, { name: roleName }).subscribe({
-        next: () => afterSave(),
-        error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al actualizar rol'); }
+    } else {
+      this.rolesService.update(roleId!, { name: roleName }).subscribe({
+        next: () => afterSave(roleId!),
+        error: (err) => { this.saving = false; this.snackbar.error(err.message || 'Error al actualizar rol'); }
       });
     }
-  }
-
-  private handleSuccess(message: string) {
-    this.closeModal();
-    this.loadRoles();
-    if (message) this.snackbar.success(message);
   }
 
   deleteRole(role: RoleDto) {
     if (!confirm(`¿Eliminar el rol "${role.name}"?`)) return;
     this.rolesService.delete(role.id).subscribe({
-      next: (res: any) => { this.loadRoles(); this.snackbar.success(res?.message || `Rol "${role.name}" eliminado`); },
-      error: (err) => this.snackbar.error(err.error?.message || 'Error al eliminar rol')
+      next: (res) => { this.loadRoles(); this.snackbar.success(res.message || `Rol "${role.name}" eliminado`); },
+      error: (err) => this.snackbar.error(err.message || 'Error al eliminar rol')
     });
   }
 
