@@ -52,7 +52,7 @@ export class SigninFormComponent {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.message || 'Credenciales incorrectas. Intenta de nuevo.';
+        this.errorMessage = err.message || 'Credenciales incorrectas. Intenta de nuevo.';
       }
     });
   }

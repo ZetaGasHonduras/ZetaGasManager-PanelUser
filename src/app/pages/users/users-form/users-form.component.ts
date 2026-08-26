@@ -35,6 +35,7 @@ export class UsersFormComponent implements OnInit {
   error = '';
 
   name = '';
+  username = '';
   email = '';
   password = '';
   roleId: number | null = null;
@@ -66,7 +67,8 @@ export class UsersFormComponent implements OnInit {
     this.usersService.getById(id).subscribe({
       next: (user) => {
         this.name = user.name;
-        this.email = user.email;
+        this.username = user.username || '';
+        this.email = user.email || '';
         this.isActive = user.isActive;
         this.roleId = user.roles?.length ? user.roles[0].id : null;
         this.loading = false;
@@ -76,13 +78,15 @@ export class UsersFormComponent implements OnInit {
   }
 
   save() {
-    if (!this.name.trim() || !this.email.trim()) return;
+    if (!this.name.trim()) return;
+    if (!this.isEdit && !this.username.trim() && !this.email.trim()) return;
     this.saving = true;
 
     if (this.isEdit && this.userId) {
       this.usersService.update(this.userId, {
         name: this.name.trim(),
-        email: this.email.trim(),
+        username: this.username.trim() || null,
+        email: this.email.trim() || null,
         isActive: this.isActive,
       }).subscribe({
         next: () => {
@@ -104,13 +108,14 @@ export class UsersFormComponent implements OnInit {
       }
       this.usersService.create({
         name: this.name.trim(),
-        email: this.email.trim(),
+        username: this.username.trim() || null,
+        email: this.email.trim() || null,
         password: this.password.trim(),
         password_confirmation: this.password.trim(),
         roleId: this.roleId,
       }).subscribe({
         next: () => this.router.navigate(['/users']),
-        error: (err) => { this.saving = false; this.error = err.error?.message || 'Error al crear usuario'; }
+        error: (err) => { this.saving = false; this.error = err.message || 'Error al crear usuario'; }
       });
     }
   }

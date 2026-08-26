@@ -48,6 +48,7 @@ export class UsersListComponent implements OnInit {
   saveError = '';
 
   formName = '';
+  formUsername = '';
   formEmail = '';
   formPassword = '';
   formRoleId: number | null = null;
@@ -78,14 +79,14 @@ export class UsersListComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.usersService.getAll({ page: this.currentPage, per_page: this.pageSize, search: this.searchTerm || undefined }).subscribe({
-      next: (res: any) => { this.users = Array.isArray(res) ? res : (res?.data ?? []); this.totalRecords = Array.isArray(res) ? res.length : (res?.total ?? 0); this.loading = false; },
+      next: (res) => { this.users = res.data; this.totalRecords = res.pagination.total; this.loading = false; },
       error: () => { this.error = 'Error al cargar usuarios'; this.loading = false; }
     });
   }
 
   loadRoles() {
     this.rolesService.getAll({ page: 1, per_page: 100 }).subscribe({
-      next: (res: any) => { this.roles = Array.isArray(res) ? res : (res?.data ?? []); },
+      next: (res) => { this.roles = res.data; },
       error: () => { this.roles = []; }
     });
   }
@@ -99,6 +100,7 @@ export class UsersListComponent implements OnInit {
     this.modalMode = 'create';
     this.selectedUser = null;
     this.formName = '';
+    this.formUsername = '';
     this.formEmail = '';
     this.formPassword = '';
     this.formRoleId = null;
@@ -111,7 +113,8 @@ export class UsersListComponent implements OnInit {
     this.modalMode = 'edit';
     this.selectedUser = user;
     this.formName = user.name;
-    this.formEmail = user.email;
+    this.formUsername = user.username || '';
+    this.formEmail = user.email || '';
     this.formPassword = '';
     this.formRoleId = user.roles?.length ? user.roles[0].id : null;
     this.formIsActive = user.isActive;
@@ -120,45 +123,48 @@ export class UsersListComponent implements OnInit {
   }
 
   saveUser() {
-    if (!this.formName.trim() || !this.formEmail.trim()) return;
-    if (this.modalMode === 'create' && !this.formPassword.trim()) return;
-    if (this.modalMode === 'create' && !this.formRoleId) return;
+    if (!this.formName.trim()) return;
+    if (this.modalMode === 'create') {
+      if (!this.formPassword.trim()) return;
+      if (!this.formRoleId) return;
+      if (!this.formUsername.trim() && !this.formEmail.trim()) return;
+    }
 
     this.saving = true;
     this.saveError = '';
     const userName = this.formName.trim();
     const isCreate = this.modalMode === 'create';
 
-    this.showModal = false;
-
     if (isCreate) {
       this.usersService.create({
         name: userName,
-        email: this.formEmail.trim(),
+        username: this.formUsername.trim() || null,
+        email: this.formEmail.trim() || null,
         password: this.formPassword.trim(),
         password_confirmation: this.formPassword.trim(),
         roleId: this.formRoleId!,
       }).subscribe({
-        next: (res: any) => { this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" creado`); },
-        error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al crear usuario'); }
+        next: (res) => { this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res.message || `Usuario "${userName}" creado`); },
+        error: (err) => { this.saving = false; this.snackbar.error(err.message || 'Error al crear usuario'); }
       });
     } else if (this.selectedUser) {
       this.usersService.update(this.selectedUser.id, {
         name: userName,
-        email: this.formEmail.trim(),
+        username: this.formUsername.trim() || null,
+        email: this.formEmail.trim() || null,
         isActive: this.formIsActive,
       }).subscribe({
-        next: (res: any) => {
+        next: (res) => {
           if (this.formRoleId) {
             this.usersService.assignRole(this.selectedUser!.id, { roleId: this.formRoleId }).subscribe({
-              next: () => { this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`); },
-              error: () => { this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`); }
+              next: () => { this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res.message || `Usuario "${userName}" actualizado`); },
+              error: () => { this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res.message || `Usuario "${userName}" actualizado`); }
             });
           } else {
-            this.saving = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario "${userName}" actualizado`);
+            this.showModal = false; this.saving = false; this.loadUsers(); this.snackbar.success(res.message || `Usuario "${userName}" actualizado`);
           }
         },
-        error: (err) => { this.saving = false; this.snackbar.error(err.error?.message || 'Error al actualizar usuario'); }
+        error: (err) => { this.saving = false; this.snackbar.error(err.message || 'Error al actualizar usuario'); }
       });
     }
   }
@@ -173,8 +179,8 @@ export class UsersListComponent implements OnInit {
     if (!this.assignRoleUser || !this.assignRoleId) return;
     this.assigningRole = true;
     this.usersService.assignRole(this.assignRoleUser.id, { roleId: this.assignRoleId }).subscribe({
-      next: (res: any) => { this.showAssignRoleModal = false; this.assigningRole = false; this.loadUsers(); this.snackbar.success(res?.message || 'Rol asignado'); },
-      error: (err) => { this.assigningRole = false; this.snackbar.error(err.error?.message || 'Error al asignar rol'); }
+      next: (res) => { this.showAssignRoleModal = false; this.assigningRole = false; this.loadUsers(); this.snackbar.success(res.message || 'Rol asignado'); },
+      error: (err) => { this.assigningRole = false; this.snackbar.error(err.message || 'Error al asignar rol'); }
     });
   }
 
@@ -187,15 +193,15 @@ export class UsersListComponent implements OnInit {
     if (!this.userToDelete) return;
     this.deleting = true;
     this.usersService.delete(this.userToDelete.id).subscribe({
-      next: (res: any) => { this.showDeleteModal = false; this.deleting = false; this.loadUsers(); this.snackbar.success(res?.message || `Usuario eliminado`); },
-      error: (err) => { this.deleting = false; this.snackbar.error(err.error?.message || 'Error al eliminar usuario'); }
+      next: (res) => { this.showDeleteModal = false; this.deleting = false; this.loadUsers(); this.snackbar.success(res.message || `Usuario eliminado`); },
+      error: (err) => { this.deleting = false; this.snackbar.error(err.message || 'Error al eliminar usuario'); }
     });
   }
 
   toggleActive(user: UserDto) {
-    this.usersService.update(user.id, { name: user.name, email: user.email, isActive: !user.isActive }).subscribe({
+    this.usersService.update(user.id, { isActive: !user.isActive }).subscribe({
       next: () => { this.loadUsers(); this.snackbar.success(`Usuario ${!user.isActive ? 'activado' : 'desactivado'}`); },
-      error: (err) => this.snackbar.error(err.error?.message || 'Error al cambiar estado')
+      error: (err) => this.snackbar.error(err.message || 'Error al cambiar estado')
     });
   }
 
